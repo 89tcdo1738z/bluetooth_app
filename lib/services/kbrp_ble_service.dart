@@ -33,8 +33,8 @@ enum ConnectionPhase {
   };
 }
 
-final class KjrDevice {
-  const KjrDevice({
+final class CompatibleDevice {
+  const CompatibleDevice({
     required this.id,
     required this.name,
     required this.rssi,
@@ -65,7 +65,7 @@ final class KbrpBleService extends ChangeNotifier {
 
   final _assembler = KbrpAssembler();
   final _messages = StreamController<KbrpMessage>.broadcast();
-  final Map<String, KjrDevice> _devices = {};
+  final Map<String, CompatibleDevice> _devices = {};
   final List<StreamSubscription<Uint8List>> _valueSubscriptions = [];
   StreamSubscription<BleDevice>? _scanSubscription;
   StreamSubscription<AvailabilityState>? _availabilitySubscription;
@@ -79,12 +79,12 @@ final class KbrpBleService extends ChangeNotifier {
 
   ConnectionPhase phase = ConnectionPhase.disconnected;
   String? errorMessage;
-  KjrDevice? selectedDevice;
+  CompatibleDevice? selectedDevice;
   DeviceIdentity identity = const DeviceIdentity();
   int? negotiatedMtu;
 
   Stream<KbrpMessage> get messages => _messages.stream;
-  List<KjrDevice> get devices {
+  List<CompatibleDevice> get devices {
     final result = _devices.values.toList();
     result.sort((a, b) => (b.rssi ?? -999).compareTo(a.rssi ?? -999));
     return result;
@@ -145,8 +145,8 @@ final class KbrpBleService extends ChangeNotifier {
       (uuid) => BleUuidParser.compareStrings(uuid, KbrpUuid.service),
     );
     if (!advertisesService) return;
-    final name = device.name?.isNotEmpty == true ? device.name! : 'KJR 设备';
-    _devices[device.deviceId] = KjrDevice(
+    final name = device.name?.isNotEmpty == true ? device.name! : '蓝牙设备';
+    _devices[device.deviceId] = CompatibleDevice(
       id: device.deviceId,
       name: name,
       rssi: device.rssi,
@@ -155,7 +155,7 @@ final class KbrpBleService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> connect(KjrDevice device) async {
+  Future<void> connect(CompatibleDevice device) async {
     final bleDevice = BleDevice(deviceId: device.id, name: device.name);
     _selectedBleDevice = bleDevice;
     selectedDevice = device;
@@ -324,7 +324,7 @@ final class KbrpBleService extends ChangeNotifier {
       }
     }
     if (service == null) {
-      throw const KbrpProtocolException('设备未提供 KJR 只读服务');
+      throw const KbrpProtocolException('设备未提供兼容的只读服务');
     }
     final required = {
       KbrpUuid.protocolInfo,

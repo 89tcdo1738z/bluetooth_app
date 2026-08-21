@@ -1,4 +1,4 @@
-package com.kjr.medical.kjr_monitor
+package com.lepeng.bluetooth_test
 
 import io.flutter.embedding.android.FlutterActivity
 

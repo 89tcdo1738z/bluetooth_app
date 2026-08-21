@@ -15,15 +15,15 @@ const _surface = Color(0xfff5f7f6);
 const _line = Color(0xffdce4e1);
 const _danger = Color(0xffb4232f);
 
-final class KjrApp extends StatefulWidget {
-  const KjrApp({super.key, required this.controller});
+final class LepengApp extends StatefulWidget {
+  const LepengApp({super.key, required this.controller});
   final MonitorController controller;
 
   @override
-  State<KjrApp> createState() => _KjrAppState();
+  State<LepengApp> createState() => _LepengAppState();
 }
 
-final class _KjrAppState extends State<KjrApp> {
+final class _LepengAppState extends State<LepengApp> {
   @override
   void dispose() {
     widget.controller.dispose();
@@ -33,7 +33,7 @@ final class _KjrAppState extends State<KjrApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'KJR 呼吸监测',
+      title: '乐鹏蓝牙测试',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -94,7 +94,7 @@ final class _Brand extends StatelessWidget {
         Icon(Icons.air_rounded, color: _teal, size: 28),
         SizedBox(width: 10),
         Text(
-          'KJR 呼吸监测',
+          '乐鹏蓝牙测试',
           style: TextStyle(
             color: _ink,
             fontSize: 20,
@@ -237,7 +237,7 @@ final class _EmptyDevices extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            scanning ? '正在查找 KJR 设备' : '尚未发现设备',
+            scanning ? '正在查找兼容设备' : '尚未发现设备',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 6),
@@ -254,7 +254,7 @@ final class _EmptyDevices extends StatelessWidget {
 
 final class _DeviceTile extends StatelessWidget {
   const _DeviceTile({required this.device, required this.onConnect});
-  final KjrDevice device;
+  final CompatibleDevice device;
   final VoidCallback? onConnect;
 
   @override
@@ -482,7 +482,7 @@ final class _OverviewPage extends StatelessWidget {
     return _PageFrame(
       title: '设备概览',
       subtitle:
-          '${identity.model ?? controller.ble.selectedDevice?.name ?? 'KJR'}  ·  '
+          '${identity.model ?? controller.ble.selectedDevice?.name ?? '蓝牙设备'}  ·  '
           '固件 ${identity.firmware ?? '--'}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

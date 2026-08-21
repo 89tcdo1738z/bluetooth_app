@@ -46,7 +46,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: kjr-monitor-android-debug
+          name: lepeng-bluetooth-test-android-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -77,13 +77,13 @@ jobs:
         run: >-
           ditto -c -k --sequesterRsrc --keepParent
           build/ios/iphoneos/Runner.app
-          build/ios/kjr-monitor-ios-unsigned.zip
+          build/ios/lepeng-bluetooth-test-ios-unsigned.zip
 
       - name: Upload unsigned iOS application
         uses: actions/upload-artifact@v4
         with:
-          name: kjr-monitor-ios-unsigned
-          path: build/ios/kjr-monitor-ios-unsigned.zip
+          name: lepeng-bluetooth-test-ios-unsigned
+          path: build/ios/lepeng-bluetooth-test-ios-unsigned.zip
           if-no-files-found: error
           retention-days: 14
 
@@ -109,17 +109,94 @@ jobs:
       - name: Build Windows application
         run: flutter build windows --release
 
-      - name: Package Windows application
+      - name: Prepare optional code signing
+        id: signing
         shell: pwsh
-        run: >-
-          Compress-Archive
-          -Path 'build/windows/x64/runner/Release/*'
-          -DestinationPath 'build/windows/kjr-monitor-windows.zip'
+        env:
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_BASE64)) {
+            "enabled=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            Write-Host "No Windows signing certificate configured; artifacts will be unsigned."
+            exit 0
+          }
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PASSWORD)) {
+            throw "WINDOWS_CERTIFICATE_PASSWORD is required when a certificate is configured."
+          }
+          $pfxPath = Join-Path $env:RUNNER_TEMP "lepeng-code-signing.pfx"
+          [IO.File]::WriteAllBytes(
+            $pfxPath,
+            [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_BASE64)
+          )
+          "enabled=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "pfx_path=$pfxPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      - name: Upload Windows application
+      - name: Sign Windows application
+        if: steps.signing.outputs.enabled == 'true'
+        shell: pwsh
+        env:
+          CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          PFX_PATH: ${{ steps.signing.outputs.pfx_path }}
+        run: |
+          $signTool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" `
+            -Filter signtool.exe -Recurse |
+            Where-Object FullName -Match '\\x64\\signtool\.exe$' |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+          if ($null -eq $signTool) { throw "signtool.exe was not found." }
+          & $signTool.FullName sign /fd SHA256 /td SHA256 `
+            /tr http://timestamp.digicert.com `
+            /f $env:PFX_PATH /p $env:CERTIFICATE_PASSWORD `
+            "build\windows\x64\runner\Release\lepeng_bluetooth_test.exe"
+          if ($LASTEXITCODE -ne 0) { throw "Application signing failed." }
+
+      - name: Package portable Windows application
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path 'build/windows/x64/runner/Release/*' `
+            -DestinationPath 'build/windows/LepengBluetoothTest-Portable.zip'
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress --yes
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $versionLine = Select-String -Path 'pubspec.yaml' -Pattern '^version:\s*(.+)$'
+          $version = $versionLine.Matches[0].Groups[1].Value.Split('+')[0].Trim()
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path -LiteralPath $iscc)) { throw "ISCC.exe was not found." }
+          & $iscc "/DMyAppVersion=$version" "windows\installer\lepeng_bluetooth_test.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Installer compilation failed." }
+
+      - name: Sign Windows installer
+        if: steps.signing.outputs.enabled == 'true'
+        shell: pwsh
+        env:
+          CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          PFX_PATH: ${{ steps.signing.outputs.pfx_path }}
+        run: |
+          $signTool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" `
+            -Filter signtool.exe -Recurse |
+            Where-Object FullName -Match '\\x64\\signtool\.exe$' |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+          if ($null -eq $signTool) { throw "signtool.exe was not found." }
+          & $signTool.FullName sign /fd SHA256 /td SHA256 `
+            /tr http://timestamp.digicert.com `
+            /f $env:PFX_PATH /p $env:CERTIFICATE_PASSWORD `
+            "build\windows\installer\LepengBluetoothTest-Setup.exe"
+          if ($LASTEXITCODE -ne 0) { throw "Installer signing failed." }
+
+      - name: Upload Windows packages
         uses: actions/upload-artifact@v4
         with:
-          name: kjr-monitor-windows
-          path: build/windows/kjr-monitor-windows.zip
+          name: lepeng-bluetooth-test-windows
+          path: |
+            build/windows/LepengBluetoothTest-Portable.zip
+            build/windows/installer/LepengBluetoothTest-Setup.exe
           if-no-files-found: error
           retention-days: 14

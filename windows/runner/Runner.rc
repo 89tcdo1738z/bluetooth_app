@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.kjr.medical" "\0"
-            VALUE "FileDescription", "kjr_monitor" "\0"
+            VALUE "CompanyName", "Lepeng" "\0"
+            VALUE "FileDescription", "乐鹏蓝牙测试" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "kjr_monitor" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.kjr.medical. All rights reserved." "\0"
-            VALUE "OriginalFilename", "kjr_monitor.exe" "\0"
-            VALUE "ProductName", "kjr_monitor" "\0"
+            VALUE "InternalName", "lepeng_bluetooth_test" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Lepeng. All rights reserved." "\0"
+            VALUE "OriginalFilename", "lepeng_bluetooth_test.exe" "\0"
+            VALUE "ProductName", "乐鹏蓝牙测试" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

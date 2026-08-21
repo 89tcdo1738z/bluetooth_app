@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kjr_monitor/protocol/kbrp.dart';
+import 'package:lepeng_bluetooth_test/protocol/kbrp.dart';
 
 void main() {
   group('KBRP CRC16', () {

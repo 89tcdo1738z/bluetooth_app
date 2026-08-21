@@ -1,5 +1,5 @@
-name: kjr_monitor
-description: "KJR 呼吸治疗设备跨平台蓝牙只读监测应用。"
+name: lepeng_bluetooth_test
+description: "乐鹏跨平台蓝牙通信测试应用。"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

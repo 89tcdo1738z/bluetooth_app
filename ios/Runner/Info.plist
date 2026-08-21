@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>KJR 呼吸监测</string>
+	<string>乐鹏蓝牙测试</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>kjr_monitor</string>
+	<string>lepeng_bluetooth_test</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -27,9 +27,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>用于连接附近的 KJR 呼吸治疗设备并读取治疗数据。</string>
+	<string>用于连接附近的蓝牙设备并读取测试数据。</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>用于识别和连接附近的 KJR 设备。</string>
+	<string>用于识别和连接附近的蓝牙设备。</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>
