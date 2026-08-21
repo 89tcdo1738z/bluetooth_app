@@ -1,0 +1,125 @@
+name: Build applications
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  android:
+    name: Android development APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.1
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kjr-monitor-android-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  ios:
+    name: iOS unsigned application
+    runs-on: macos-15
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.1
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build without code signing
+        run: flutter build ios --release --no-codesign
+
+      - name: Package unsigned application
+        run: >-
+          ditto -c -k --sequesterRsrc --keepParent
+          build/ios/iphoneos/Runner.app
+          build/ios/kjr-monitor-ios-unsigned.zip
+
+      - name: Upload unsigned iOS application
+        uses: actions/upload-artifact@v4
+        with:
+          name: kjr-monitor-ios-unsigned
+          path: build/ios/kjr-monitor-ios-unsigned.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    name: Windows application
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.1
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build Windows application
+        run: flutter build windows --release
+
+      - name: Package Windows application
+        shell: pwsh
+        run: >-
+          Compress-Archive
+          -Path 'build/windows/x64/runner/Release/*'
+          -DestinationPath 'build/windows/kjr-monitor-windows.zip'
+
+      - name: Upload Windows application
+        uses: actions/upload-artifact@v4
+        with:
+          name: kjr-monitor-windows
+          path: build/windows/kjr-monitor-windows.zip
+          if-no-files-found: error
+          retention-days: 14
