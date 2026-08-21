@@ -36,8 +36,10 @@ Windows 首次构建 Flutter 插件前需开启 Windows 开发者模式，以允
 构建完成后，在该 Actions Run 底部的 `Artifacts` 下载：
 
 - `lepeng-bluetooth-test-android-debug`：开发签名 APK，可安装到 Android 真机联调，不能上传 Play Store。
-- `lepeng-bluetooth-test-windows`：同时包含 `LepengBluetoothTest-Setup.exe` 安装程序和 `LepengBluetoothTest-Portable.zip` 便携版。
+- `lepeng-bluetooth-test-windows`：同时包含带版本号的 `LepengBluetoothTest-Setup-<版本>.exe` 安装程序和 `LepengBluetoothTest-Portable.zip` 便携版。
 - `lepeng-bluetooth-test-ios-unsigned`：未签名 `Runner.app` 压缩包，用于确认 iOS 可编译，不能直接安装到 iPhone。
+
+推送 `v1.0.0` 这类标签时，标签版本必须与 `pubspec.yaml` 的版本（忽略 `+` 后的构建号）一致。工作流会自动创建同名 GitHub Release，并将 `LepengBluetoothTest-Setup-1.0.0.exe` 作为 Release 资产发布。用户可从仓库 `Releases` 页面直接下载安装程序，不需要先下载并解压 Actions Artifact。手动运行工作流只生成测试用 Artifact，不会创建正式 Release。
 
 发布 Android AAB 需把生产 Keystore 配置为 GitHub Secrets。生成可安装 IPA 或上传 TestFlight 需 Apple Developer 账号、Distribution Certificate、Provisioning Profile 和 App Store Connect API Key，不应把证书或密码直接提交到仓库。
 

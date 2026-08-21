@@ -109,6 +109,17 @@ jobs:
       - name: Build Windows application
         run: flutter build windows --release
 
+      - name: Validate release version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $versionLine = Select-String -Path 'pubspec.yaml' -Pattern '^version:\s*(.+)$'
+          $appVersion = $versionLine.Matches[0].Groups[1].Value.Split('+')[0].Trim()
+          $tagVersion = '${{ github.ref_name }}'.Substring(1)
+          if ($appVersion -ne $tagVersion) {
+            throw "Tag version $tagVersion does not match pubspec.yaml version $appVersion."
+          }
+
       - name: Prepare optional code signing
         id: signing
         shell: pwsh
@@ -185,10 +196,14 @@ jobs:
             Sort-Object FullName -Descending |
             Select-Object -First 1
           if ($null -eq $signTool) { throw "signtool.exe was not found." }
+          $installer = Get-ChildItem 'build\windows\installer' `
+            -Filter 'LepengBluetoothTest-Setup-*.exe' |
+            Select-Object -First 1
+          if ($null -eq $installer) { throw "Windows installer was not found." }
           & $signTool.FullName sign /fd SHA256 /td SHA256 `
             /tr http://timestamp.digicert.com `
             /f $env:PFX_PATH /p $env:CERTIFICATE_PASSWORD `
-            "build\windows\installer\LepengBluetoothTest-Setup.exe"
+            $installer.FullName
           if ($LASTEXITCODE -ne 0) { throw "Installer signing failed." }
 
       - name: Upload Windows packages
@@ -197,6 +212,42 @@ jobs:
           name: lepeng-bluetooth-test-windows
           path: |
             build/windows/LepengBluetoothTest-Portable.zip
-            build/windows/installer/LepengBluetoothTest-Setup.exe
+            build/windows/installer/LepengBluetoothTest-Setup-*.exe
           if-no-files-found: error
           retention-days: 14
+
+  release:
+    name: Publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: lepeng-bluetooth-test-windows
+          path: dist
+
+      - name: Publish installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          installer=$(find dist -type f -name 'LepengBluetoothTest-Setup-*.exe' -print -quit)
+          if [ -z "$installer" ]; then
+            echo "Windows installer was not found." >&2
+            exit 1
+          fi
+          if gh release view "${{ github.ref_name }}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "${{ github.ref_name }}" "$installer" \
+              --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "${{ github.ref_name }}" "$installer" \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --title "乐鹏蓝牙测试 ${{ github.ref_name }}" \
+              --generate-notes
+          fi
